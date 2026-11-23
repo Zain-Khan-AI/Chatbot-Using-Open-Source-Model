@@ -1,0 +1,268 @@
+from groq import Groq
+import streamlit as st
+
+# Page config
+st.set_page_config(
+    page_title="Personal AI Assistant",
+    page_icon="⚡",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# Custom Professional CSS
+st.markdown(
+    """
+<style>
+    /* Google Font */
+    @import url('https://googleapis.com');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Main App Background */
+    .stApp {
+        background: radial-gradient(circle at top right, #1e1b4b 0%, #090d16 45%, #05070c 100%);
+        color: #f8fafc;
+    }
+
+    /* Hide default Streamlit header/footer */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {background: transparent !important;}
+
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(12px);
+        border-right: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    /* Custom Header Banner */
+    .hero-header {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.1));
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 16px;
+        padding: 20px 28px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .hero-title {
+        font-size: 26px;
+        font-weight: 700;
+        background: linear-gradient(90deg, #818cf8, #e879f9);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    .hero-subtitle {
+        color: #94a3b8;
+        font-size: 14px;
+        margin-top: 4px;
+    }
+
+    .status-pill {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    /* Chat Message Bubbles */
+    [data-testid="stChatMessage"] {
+        background-color: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 16px;
+        padding: 16px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(8px);
+    }
+
+    /* Buttons Styling */
+    .stButton > button {
+        width: 100%;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(239, 68, 68, 0.35);
+    }
+
+    /* Chat Input Box */
+    [data-testid="stChatInput"] {
+        border-radius: 14px !important;
+        border: 1px solid rgba(129, 140, 248, 0.4) !important;
+        background-color: rgba(15, 23, 42, 0.9) !important;
+    }
+
+    /* Developer Credit & Social Links Card */
+    .dev-footer {
+        background: rgba(30, 41, 59, 0.55);
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: 14px;
+        padding: 16px;
+        text-align: center;
+        margin-top: 24px;
+    }
+
+    .dev-credit {
+        color: #cbd5e1;
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+
+    .dev-name {
+        font-weight: 700;
+        background: linear-gradient(90deg, #818cf8, #e879f9);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+    }
+
+    .social-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        color: #f8fafc !important;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .social-btn:hover {
+        transform: translateY(-2px);
+        border-color: #818cf8;
+        box-shadow: 0 4px 12px rgba(129, 140, 248, 0.3);
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# Sidebar Settings
+with st.sidebar:
+  st.markdown("## ⚙️ Control Panel")
+  st.caption("Configure your open-source AI engine")
+  st.divider()
+
+  api_key = st.text_input(
+      "🔑 Groq API Key", type="password", placeholder="Paste your gsk_... key here"
+  )
+
+  model_choice = st.selectbox(
+      "🧠 Select Open-Source Model",
+      [
+          "openai/gpt-oss-120b",
+          "openai/gpt-oss-20b",
+          "qwen/qwen3.8-27b",
+      ],
+  )
+
+  st.divider()
+  if st.button("🗑️ Clear Conversation"):
+    st.session_state.messages = []
+    st.rerun()
+
+  # Clickable GitHub, LinkedIn & Developer Credit
+  st.markdown(
+      """
+      <div class="dev-footer">
+          <div class="dev-credit">Generated by <span class="dev-name">Zain Khan</span></div>
+          <div class="social-links">
+              <a href="https://github.com" target="_blank" class="social-btn" title="GitHub Profile">
+                  <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                  </svg>
+              </a>
+              <a href="https://linkedin.com" target="_blank" class="social-btn" title="LinkedIn Profile">
+                  <svg height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+                  </svg>
+              </a>
+          </div>
+      </div>
+      """,
+      unsafe_allow_html=True,
+  )
+
+
+# Custom Top Banner
+st.markdown(
+    """
+<div class="hero-header">
+    <div>
+        <h1 class="hero-title">⚡ Personal AI Assistant</h1>
+        <p class="hero-subtitle">High-Speed Open-Source LLM Interface powered by Groq</p>
+    </div>
+    <div class="status-pill">● Online & Ready</div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+# Chat History Initialize
+if "messages" not in st.session_state:
+  st.session_state.messages = [{
+      "role": "assistant",
+      "content": (
+          "Hello! I am your **AI Assistant**. Please paste your Groq API Key"
+          " in the left sidebar and ask me anything!"
+      ),
+  }]
+
+# Display Messages
+for msg in st.session_state.messages:
+  avatar = "🧑‍💻" if msg["role"] == "user" else "⚡"
+  with st.chat_message(msg["role"], avatar=avatar):
+    st.markdown(msg["content"])
+
+# Chat Input
+if prompt := st.chat_input("Ask a question..."):
+  if not api_key:
+    st.warning("⚠️ Please paste your Groq API Key in the left sidebar first!")
+    st.stop()
+
+  st.session_state.messages.append({"role": "user", "content": prompt})
+  with st.chat_message("user", avatar="🧑‍💻"):
+    st.markdown(prompt)
+
+  client = Groq(api_key=api_key)
+  with st.chat_message("assistant", avatar="⚡"):
+    with st.spinner("Thinking..."):
+      try:
+        response = client.chat.completions.create(
+            model=model_choice,
+            messages=st.session_state.messages,
+            max_tokens=800,
+        )
+        bot_reply = response.choices[0].message.content
+        st.markdown(bot_reply)
+        st.session_state.messages.append(
+            {"role": "assistant", "content": bot_reply}
+        )
+      except Exception as e:
+        st.error(f"An error occurred: {e}")
